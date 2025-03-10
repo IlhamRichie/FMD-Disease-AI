@@ -21,7 +21,7 @@ class SplashScreen3 extends StatelessWidget {
               ),
               SizedBox(height: 10),
               Text(
-                'Prevention and early detection reduce the risk of FMD outbreaks',
+                'Prevention and early detection reduce the \nrisk of FMD outbreaks',
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 30),
