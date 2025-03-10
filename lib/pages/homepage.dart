@@ -293,7 +293,7 @@ class HomePage extends StatelessWidget {
             const SizedBox(width: 10), // Kurangi jarak antar ikon
             _buildBottomIcon(
               icon: Icons.person,
-              color: Colors.grey.shade700,
+              color: const Color.fromARGB(255, 255, 255, 255),
               onPressed: () {
                 Navigator.push(context,
                     MaterialPageRoute(builder: (context) => ProfileScreen()));
