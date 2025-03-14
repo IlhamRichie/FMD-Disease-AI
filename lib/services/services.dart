@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class ApiService {
   // Ganti dengan URL API Flask Anda (Ngrok atau localhost)
   static const String apiUrl =
-      "https://2f80-103-208-204-253.ngrok-free.app/predict";
+      "https://fbd6-103-208-204-253.ngrok-free.app/predict";
 
   // Fungsi untuk mengirim gambar ke API
   static Future<Map<String, dynamic>> predictImage(File image) async {

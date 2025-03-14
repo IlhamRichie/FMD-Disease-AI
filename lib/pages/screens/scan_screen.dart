@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../../services/services.dart'; // Pastikan path ini sesuai
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ScanScreen extends StatefulWidget {
   @override
@@ -14,7 +15,7 @@ class _ScanScreenState extends State<ScanScreen> {
   String _predictionResult = "";
   CameraController? _cameraController;
   final ImagePicker _picker = ImagePicker();
-  bool _isLoading = false; // Untuk menampilkan loading indicator
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -49,7 +50,7 @@ class _ScanScreenState extends State<ScanScreen> {
     }
 
     setState(() {
-      _isLoading = true; // Tampilkan loading indicator
+      _isLoading = true;
     });
 
     try {
@@ -67,7 +68,7 @@ class _ScanScreenState extends State<ScanScreen> {
       });
     } finally {
       setState(() {
-        _isLoading = false; // Sembunyikan loading indicator
+        _isLoading = false;
       });
     }
   }
@@ -75,7 +76,7 @@ class _ScanScreenState extends State<ScanScreen> {
   // Ambil gambar dari gallery
   Future<void> _pickImageFromGallery() async {
     setState(() {
-      _isLoading = true; // Tampilkan loading indicator
+      _isLoading = true;
     });
 
     try {
@@ -96,7 +97,7 @@ class _ScanScreenState extends State<ScanScreen> {
       });
     } finally {
       setState(() {
-        _isLoading = false; // Sembunyikan loading indicator
+        _isLoading = false;
       });
     }
   }
@@ -104,10 +105,42 @@ class _ScanScreenState extends State<ScanScreen> {
   // Kirim gambar ke API dan tampilkan hasil
   Future<void> _sendImageToAPI(File image) async {
     try {
-      var result = await ApiService.predictImage(image);
-      setState(() {
-        _predictionResult = result.toString();
-      });
+      // Buat request multipart
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('https://fbd6-103-208-204-253.ngrok-free.app/predict'), // Ganti dengan URL API Flask Anda
+      );
+
+      // Tambahkan file gambar ke request
+      var fileStream = http.ByteStream(image.openRead());
+      var length = await image.length();
+      var multipartFile = http.MultipartFile(
+        'file',
+        fileStream,
+        length,
+        filename: image.path.split('/').last,
+      );
+      request.files.add(multipartFile);
+
+      // Kirim request
+      var response = await request.send();
+
+      // Cek status response
+      if (response.statusCode == 200) {
+        // Baca response
+        var responseData = await response.stream.bytesToString();
+        var result = jsonDecode(responseData);
+
+        // Tampilkan hasil prediksi
+        setState(() {
+          _predictionResult = "Kondisi: ${result['predicted_class_label']}\n"
+                              "Probabilitas: ${(result['predicted_probability'] * 100).toStringAsFixed(2)}%";
+        });
+      } else {
+        setState(() {
+          _predictionResult = "Failed to get prediction";
+        });
+      }
     } catch (e) {
       print("Error sending image to API: $e");
       setState(() {
@@ -125,162 +158,58 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text("FMD Detection"),
-        backgroundColor: Colors.white,
-        elevation: 0,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.green),
-        titleTextStyle: const TextStyle(
-          color: Colors.green,
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-        ),
       ),
       body: Column(
         children: [
-          const SizedBox(height: 20),
-
-          // Kamera Container
-          Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: _cameraController == null || !_cameraController!.value.isInitialized
-                  ? Container(
-                      width: 320,
-                      height: 420,
-                      color: Colors.black,
-                      child: const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      ),
-                    )
-                  : SizedBox(
-                      width: 320,
-                      height: 420,
-                      child: CameraPreview(_cameraController!),
-                    ),
-            ),
+          // Kamera Preview
+          Expanded(
+            child: _cameraController == null || !_cameraController!.value.isInitialized
+                ? Center(child: CircularProgressIndicator())
+                : CameraPreview(_cameraController!),
           ),
 
-          const SizedBox(height: 10),
-
-          // Label hasil scan
-          Container(
-            width: 320,
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
+          // Tombol Capture dan Gallery
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Text(
-                  "Label",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
+                // Tombol Capture
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _takePicture,
+                  child: Text("Capture"),
                 ),
-                SizedBox(height: 4),
-                Text(
-                  _predictionResult.isEmpty ? "No prediction yet" : _predictionResult,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+
+                // Tombol Gallery
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _pickImageFromGallery,
+                  child: Text("Gallery"),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 80),
+          // Hasil Prediksi
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              _predictionResult.isEmpty ? "No prediction yet" : _predictionResult,
+              style: TextStyle(fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+          ),
+
+          // Loading Indicator
+          if (_isLoading)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
         ],
       ),
-
-      // Bottom Navigation Bar
-      bottomNavigationBar: SizedBox(
-        height: 30,
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            Positioned(
-              bottom: 33,
-              left: 40,
-              right: 40,
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.green, width: 2),
-                ),
-              ),
-            ),
-
-            Positioned(
-              bottom: 20,
-              child: Container(
-                width: 75,
-                height: 75,
-                decoration: const BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.history_rounded, color: Colors.white, size: 32),
-              ),
-            ),
-
-            // Tombol kamera
-            Positioned(
-              left: 80,
-              bottom: 30,
-              child: GestureDetector(
-                onTap: _isLoading ? null : _takePicture, // Nonaktifkan tombol saat loading
-                child: _buildBottomIcon(Icons.camera_alt),
-              ),
-            ),
-
-            // Tombol gallery
-            Positioned(
-              right: 80,
-              bottom: 30,
-              child: GestureDetector(
-                onTap: _isLoading ? null : _pickImageFromGallery, // Nonaktifkan tombol saat loading
-                child: _buildBottomIcon(Icons.photo),
-              ),
-            ),
-          ],
-        ),
-      ),
-
-      // Loading indicator
-      // if (_isLoading)
-      //   Center(
-      //     child: CircularProgressIndicator(),
-      //   ),
-    );
-  }
-
-  Widget _buildBottomIcon(IconData icon) {
-    return Container(
-      width: 55,
-      height: 55,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.green, width: 2),
-      ),
-      child: Icon(icon, color: Colors.green, size: 28),
     );
   }
 }
