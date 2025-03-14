@@ -118,6 +118,113 @@ class HomePage extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(15),
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Data Kesehatan 12 Sapi",
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 5),
+          const Text("Di desa: Pepedan, Dukuhturi",
+              style: TextStyle(color: Colors.white70, fontSize: 12)),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildStatistic("572 kg", "Berat \nRata-rata"),
+              _buildStatistic("5", "Kasus \nFMD"),
+              _buildStatistic("80%", "Kesehatan \nBaik"),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 150,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: true,
+                  horizontalInterval: 20,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: Colors.white.withOpacity(0.1),
+                      strokeWidth: 1,
+                    );
+                  },
+                ),
+                titlesData: FlTitlesData(
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: 20,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          value.toInt().toString(),
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        );
+                      },
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          (value.toInt() + 1).toString(),
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        );
+                      },
+                    ),
+                  ),
+                  rightTitles: const AxisTitles(),
+                  topTitles: const AxisTitles(),
+                ),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: const [
+                      FlSpot(0, 74),
+                      FlSpot(1, 75),
+                      FlSpot(2, 80),
+                      FlSpot(3, 85),
+                      FlSpot(4, 80),
+                      FlSpot(5, 87),
+                      FlSpot(6, 85),
+                    ],
+                    isCurved: true,
+                    color: Colors.white,
+                    barWidth: 3,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        return FlDotCirclePainter(
+                          radius: 4,
+                          color: Colors.white,
+                          strokeWidth: 2,
+                          strokeColor: Colors.green.shade700,
+                        );
+                      },
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.white.withOpacity(0.3),
+                          Colors.white.withOpacity(0.1),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
