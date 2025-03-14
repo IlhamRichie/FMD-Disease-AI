@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'screens/profile_screen.dart';
 import 'screens/scan_screen.dart';
 
@@ -55,7 +54,9 @@ class HomePage extends StatelessWidget {
         shape: const CircleBorder(), // Membuat FAB bulat
         onPressed: () {
           Navigator.push(
-              context, MaterialPageRoute(builder: (context) => ScanScreen()));
+            context,
+            MaterialPageRoute(builder: (context) => ScanScreen()),
+          );
         },
         child: const Icon(
           FontAwesomeIcons.qrcode,
@@ -109,10 +110,7 @@ class HomePage extends StatelessWidget {
       margin: const EdgeInsets.only(top: 0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            const Color(0xFF1B641F),
-            Colors.green.shade400
-          ],
+          colors: [const Color(0xFF1B641F), Colors.green.shade400],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
