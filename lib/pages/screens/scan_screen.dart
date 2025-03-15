@@ -108,7 +108,8 @@ class _ScanScreenState extends State<ScanScreen> {
       // Buat request multipart
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://fbd6-103-208-204-253.ngrok-free.app/predict'), // Ganti dengan URL API Flask Anda
+        Uri.parse(
+            'https://928e-103-208-204-253.ngrok-free.app/predict'), // Ganti dengan URL API Flask Anda
       );
 
       // Tambahkan file gambar ke request
@@ -134,7 +135,7 @@ class _ScanScreenState extends State<ScanScreen> {
         // Tampilkan hasil prediksi
         setState(() {
           _predictionResult = "Kondisi: ${result['predicted_class_label']}\n"
-                              "Probabilitas: ${(result['predicted_probability'] * 100).toStringAsFixed(2)}%";
+              "Probabilitas: ${(result['predicted_probability'] * 100).toStringAsFixed(2)}%";
         });
       } else {
         setState(() {
@@ -158,7 +159,9 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: const Text("FMD Detection"),
         centerTitle: true,
       ),
@@ -166,37 +169,91 @@ class _ScanScreenState extends State<ScanScreen> {
         children: [
           // Kamera Preview
           Expanded(
-            child: _cameraController == null || !_cameraController!.value.isInitialized
+            child: _cameraController == null ||
+                    !_cameraController!.value.isInitialized
                 ? Center(child: CircularProgressIndicator())
                 : CameraPreview(_cameraController!),
           ),
 
           // Tombol Capture dan Gallery
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Tombol Capture
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _takePicture,
-                  child: Text("Capture"),
-                ),
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Tombol Capture
+                  GestureDetector(
+                    onTap: _isLoading ? null : _takePicture,
+                    child: Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.blue.shade700,
+                            Colors.blue.shade400
+                          ], // Gradient
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius:
+                            BorderRadius.circular(10), // Border radius
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.camera_alt,
+                              color: Colors.white), // Ikon kamera
+                          SizedBox(width: 8),
+                          Text(
+                            "Capture",
+                            style: TextStyle(color: Colors.white), // Warna teks
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
-                // Tombol Gallery
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _pickImageFromGallery,
-                  child: Text("Gallery"),
-                ),
-              ],
-            ),
-          ),
+                  // Tombol Gallery
+                  GestureDetector(
+                    onTap: _isLoading ? null : _pickImageFromGallery,
+                    child: Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.green.shade700,
+                            Colors.green.shade400
+                          ], // Gradient
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius:
+                            BorderRadius.circular(10), // Border radius
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.photo_library,
+                              color: Colors.white), // Ikon galeri
+                          SizedBox(width: 8),
+                          Text(
+                            "Gallery",
+                            style: TextStyle(color: Colors.white), // Warna teks
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              )),
 
           // Hasil Prediksi
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              _predictionResult.isEmpty ? "No prediction yet" : _predictionResult,
+              _predictionResult.isEmpty
+                  ? "No prediction yet"
+                  : _predictionResult,
               style: TextStyle(fontSize: 16),
               textAlign: TextAlign.center,
             ),

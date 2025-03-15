@@ -51,7 +51,7 @@ class HomePage extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.green.shade700,
         elevation: 4,
-        shape: const CircleBorder(), // Membuat FAB bulat
+        shape: const CircleBorder(),
         onPressed: () {
           Navigator.push(
             context,
@@ -116,6 +116,28 @@ class HomePage extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(15),
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Data Kesehatan Sapi",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildStatistic("10", "Sapi Sehat"),
+              _buildStatistic("2", "Sapi Sakit"),
+              _buildStatistic("1", "Sapi Dirawat"),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -123,12 +145,18 @@ class HomePage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(value,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold)),
-        Text(label, style: const TextStyle(color: Colors.white70)),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70),
+        ),
       ],
     );
   }
@@ -144,18 +172,25 @@ class HomePage extends StatelessWidget {
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Container(
+        width: double.infinity, // Card diperlebar
         decoration: BoxDecoration(
           gradient: gradient,
           borderRadius: BorderRadius.circular(15),
         ),
         child: ListTile(
-          title: Text(title,
-              style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white)),
+          title: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
           subtitle: subtitle != null
-              ? Text(subtitle, style: const TextStyle(color: Colors.white70))
+              ? Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white70),
+                )
               : null,
           trailing: Icon(icon, color: Colors.white),
           onTap: onTap,
@@ -166,28 +201,29 @@ class HomePage extends StatelessWidget {
 
   Widget _buildBottomAppBar(BuildContext context) {
     return BottomAppBar(
-      color: Color.fromARGB(255, 39, 150, 44),
+      color: const Color.fromARGB(255, 39, 150, 44),
       shape: const CircularNotchedRectangle(),
-      notchMargin: 10, // Kurangi notchMargin agar tidak terlalu tinggi
+      notchMargin: 10,
       child: Container(
-        height: 60, // Sesuaikan tinggi agar tidak overflow
-        padding:
-            const EdgeInsets.symmetric(vertical: 0), // Hapus padding vertikal
+        height: 60,
+        padding: const EdgeInsets.symmetric(vertical: 0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildBottomIcon(
               icon: Icons.home,
-              color: const Color.fromARGB(255, 255, 255, 255),
+              color: Colors.white,
               onPressed: () {},
             ),
-            const SizedBox(width: 10), // Kurangi jarak antar ikon
+            const SizedBox(width: 10),
             _buildBottomIcon(
               icon: Icons.person,
-              color: const Color.fromARGB(255, 255, 255, 255),
+              color: Colors.white,
               onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => ProfileScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfileScreen()),
+                );
               },
             ),
           ],
@@ -201,17 +237,11 @@ class HomePage extends StatelessWidget {
     required Color color,
     required VoidCallback onPressed,
   }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: Icon(icon, color: color, size: 35), // Kurangi ukuran ikon
-          padding: EdgeInsets.zero, // Hapus padding bawaan IconButton
-          constraints:
-              const BoxConstraints(), // Hilangkan batas bawaan IconButton
-          onPressed: onPressed,
-        ),
-      ],
+    return IconButton(
+      icon: Icon(icon, color: color, size: 35),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+      onPressed: onPressed,
     );
   }
 }
