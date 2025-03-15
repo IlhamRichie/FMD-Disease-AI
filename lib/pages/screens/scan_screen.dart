@@ -10,17 +10,22 @@ class ScanScreen extends StatefulWidget {
   _ScanScreenState createState() => _ScanScreenState();
 }
 
-class _ScanScreenState extends State<ScanScreen> {
+class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateMixin {
   File? _image;
   String _predictionResult = "";
   CameraController? _cameraController;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
+  // Animasi untuk overlay garis
+  AnimationController? _animationController;
+  Animation<Offset>? _slideAnimation;
+
   @override
   void initState() {
     super.initState();
     _initializeCamera();
+    _initializeAnimation();
   }
 
   // Inisialisasi kamera
@@ -28,17 +33,35 @@ class _ScanScreenState extends State<ScanScreen> {
     try {
       final cameras = await availableCameras();
       final firstCamera = cameras.first;
-
       _cameraController = CameraController(
         firstCamera,
         ResolutionPreset.medium,
       );
-
       await _cameraController!.initialize();
       if (!mounted) return;
       setState(() {});
     } catch (e) {
       print("Error initializing camera: $e");
+    }
+  }
+
+  // Inisialisasi animasi
+  void _initializeAnimation() {
+    try {
+      _animationController = AnimationController(
+        vsync: this,
+        duration: Duration(seconds: 2),
+      )..repeat(reverse: true); // Animasi berulang
+
+      _slideAnimation = Tween<Offset>(
+        begin: Offset(0, -1), // Mulai dari atas
+        end: Offset(0, 1), // Berakhir di bawah
+      ).animate(CurvedAnimation(
+        parent: _animationController!,
+        curve: Curves.easeInOut,
+      ));
+    } catch (e) {
+      print("Error initializing animation: $e");
     }
   }
 
@@ -58,7 +81,6 @@ class _ScanScreenState extends State<ScanScreen> {
       setState(() {
         _image = File(image.path);
       });
-
       // Kirim gambar ke API
       await _sendImageToAPI(_image!);
     } catch (e) {
@@ -81,12 +103,10 @@ class _ScanScreenState extends State<ScanScreen> {
 
     try {
       final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-
       if (pickedFile != null) {
         setState(() {
           _image = File(pickedFile.path);
         });
-
         // Kirim gambar ke API
         await _sendImageToAPI(_image!);
       }
@@ -108,8 +128,7 @@ class _ScanScreenState extends State<ScanScreen> {
       // Buat request multipart
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse(
-            'https://928e-103-208-204-253.ngrok-free.app/predict'), // Ganti dengan URL API Flask Anda
+        Uri.parse('https://928e-103-208-204-253.ngrok-free.app/predict'), // Ganti dengan URL API Flask Anda
       );
 
       // Tambahkan file gambar ke request
@@ -153,6 +172,7 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   void dispose() {
     _cameraController?.dispose();
+    _animationController?.dispose(); // Hentikan animasi saat dispose
     super.dispose();
   }
 
@@ -167,93 +187,95 @@ class _ScanScreenState extends State<ScanScreen> {
       ),
       body: Column(
         children: [
-          // Kamera Preview
+          // Kamera Preview dengan overlay
           Expanded(
-            child: _cameraController == null ||
-                    !_cameraController!.value.isInitialized
-                ? Center(child: CircularProgressIndicator())
-                : CameraPreview(_cameraController!),
+            child: Stack(
+              children: [
+                if (_cameraController != null && _cameraController!.value.isInitialized)
+                  CameraPreview(_cameraController!),
+
+                // Overlay garis turun naik
+                if (_image == null && _slideAnimation != null) // Hanya tampilkan overlay saat kamera aktif
+                  SlideTransition(
+                    position: _slideAnimation!,
+                    child: Center(
+                      child: Container(
+                        height: 2,
+                        width: MediaQuery.of(context).size.width * 0.8,
+                        color: Colors.red.withOpacity(0.7), // Warna garis
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
 
           // Tombol Capture dan Gallery
           Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  // Tombol Capture
-                  GestureDetector(
-                    onTap: _isLoading ? null : _takePicture,
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.blue.shade700,
-                            Colors.blue.shade400
-                          ], // Gradient
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Tombol Capture
+                GestureDetector(
+                  onTap: _isLoading ? null : _takePicture,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.blue.shade700, Colors.blue.shade400],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.camera_alt, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          "Capture",
+                          style: TextStyle(color: Colors.white),
                         ),
-                        borderRadius:
-                            BorderRadius.circular(10), // Border radius
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.camera_alt,
-                              color: Colors.white), // Ikon kamera
-                          SizedBox(width: 8),
-                          Text(
-                            "Capture",
-                            style: TextStyle(color: Colors.white), // Warna teks
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
+                ),
 
-                  // Tombol Gallery
-                  GestureDetector(
-                    onTap: _isLoading ? null : _pickImageFromGallery,
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.green.shade700,
-                            Colors.green.shade400
-                          ], // Gradient
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                // Tombol Gallery
+                GestureDetector(
+                  onTap: _isLoading ? null : _pickImageFromGallery,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.green.shade700, Colors.green.shade400],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.photo_library, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          "Gallery",
+                          style: TextStyle(color: Colors.white),
                         ),
-                        borderRadius:
-                            BorderRadius.circular(10), // Border radius
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.photo_library,
-                              color: Colors.white), // Ikon galeri
-                          SizedBox(width: 8),
-                          Text(
-                            "Gallery",
-                            style: TextStyle(color: Colors.white), // Warna teks
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
-                ],
-              )),
+                ),
+              ],
+            ),
+          ),
 
           // Hasil Prediksi
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              _predictionResult.isEmpty
-                  ? "No prediction yet"
-                  : _predictionResult,
+              _predictionResult.isEmpty ? "No prediction yet" : _predictionResult,
               style: TextStyle(fontSize: 16),
               textAlign: TextAlign.center,
             ),
