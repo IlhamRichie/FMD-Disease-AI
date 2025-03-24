@@ -14,7 +14,8 @@ class _ScanScreenState extends State<ScanScreen> {
   String _predictionResult = "";
   bool _isLoading = false;
   String? _originalImageBase64;
-  String? _heatmapImageBase64;
+  String? _overlayedImageBase64;
+  final PageController _pageController = PageController();
 
   Future<void> _pickImage(ImageSource source) async {
     setState(() => _isLoading = true);
@@ -30,7 +31,7 @@ class _ScanScreenState extends State<ScanScreen> {
       setState(() {
         _predictionResult = result["error"] ?? "Kondisi: ${result["predicted_class_label"]}";
         _originalImageBase64 = result["original_image"];
-        _heatmapImageBase64 = result["heatmap_image"];
+        _overlayedImageBase64 = result["overlayed_image"];
       });
     } catch (e) {
       setState(() => _predictionResult = "Error: $e");
@@ -52,13 +53,8 @@ class _ScanScreenState extends State<ScanScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              _originalImageBase64 != null
-                  ? _buildImageCard("Gambar Original", _originalImageBase64!)
-                  : SizedBox.shrink(),
-              SizedBox(height: 20),
-              _heatmapImageBase64 != null
-                  ? _buildImageCard("Gambar Heatmap", _heatmapImageBase64!)
-                  : SizedBox.shrink(),
+              if (_originalImageBase64 != null || _overlayedImageBase64 != null)
+                _buildImageSlider(),
               SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -78,23 +74,65 @@ class _ScanScreenState extends State<ScanScreen> {
     );
   }
 
-  Widget _buildImageCard(String title, String base64Image) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue.shade800)),
-            SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.memory(base64Decode(base64Image)),
-            ),
-          ],
+  Widget _buildImageSlider() {
+    List<String> images = [];
+    if (_originalImageBase64 != null) images.add(_originalImageBase64!);
+    if (_overlayedImageBase64 != null) images.add(_overlayedImageBase64!);
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 300, // Tinggi slider
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: images.length,
+            itemBuilder: (context, index) {
+              return Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Text(
+                        index == 0 ? "Gambar Original" : "Gambar Overlay",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue.shade800),
+                      ),
+                      SizedBox(height: 10),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.memory(
+                            base64Decode(images[index]),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         ),
-      ),
+        SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(images.length, (index) {
+            return Container(
+              margin: EdgeInsets.symmetric(horizontal: 4),
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _pageController.hasClients && _pageController.page?.round() == index
+                    ? Colors.blue.shade800
+                    : Colors.grey,
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 
