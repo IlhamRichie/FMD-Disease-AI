@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String apiUrl = "https://b431-103-208-204-251.ngrok-free.app/predict";
+  static const String apiUrl = "https://0172-103-208-204-253.ngrok-free.app/predict";
 
   static Future<Map<String, dynamic>> predictImage(File image) async {
     try {

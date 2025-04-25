@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../homepage.dart'; // Pastikan ini sesuai dengan path ke HomePage Anda
+import '../scan_screen.dart'; // Pastikan ini sesuai dengan path ke HomePage Anda
 
 class SplashScreens extends StatefulWidget {
   @override
@@ -37,7 +37,7 @@ class _SplashScreensState extends State<SplashScreens> {
       if (mounted && _currentPage == _splashData.length - 1) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => ScanScreen()),
         );
       }
     });
@@ -58,7 +58,7 @@ class _SplashScreensState extends State<SplashScreens> {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomePage()),
+        MaterialPageRoute(builder: (context) => ScanScreen()),
       );
     }
   }

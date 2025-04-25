@@ -1,62 +1,71 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'screens/profile_screen.dart';
 import 'screens/scan_screen.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String? scannedImageBase64;
+  String? overlayImageBase64;
+  String? scanResult;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          _buildAppBar(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHealthDataCard(),
-                  const SizedBox(height: 20),
-                  _buildActionCard(
-                    title: "Catat Kesehatan Sapi",
-                    icon: FontAwesomeIcons.pen,
-                    gradient: LinearGradient(
-                      colors: [Colors.blue.shade700, Colors.blue.shade400],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 15),
-                  _buildActionCard(
-                    title: "Riwayat Kesehatan Sapi",
-                    subtitle: "Lihat data kesehatan sebelumnya",
-                    icon: Icons.history,
-                    gradient: LinearGradient(
-                      colors: [Colors.orange.shade700, Colors.orange.shade400],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    onTap: () {},
-                  ),
-                ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildAppBar(),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (scannedImageBase64 != null)
+                      _buildImageCard(
+                        title: "Input Image",
+                        imageBase64: scannedImageBase64!,
+                        label: scanResult ?? '',
+                      ),
+                    if (overlayImageBase64 != null)
+                      _buildImageCard(
+                        title: "GradCam",
+                        imageBase64: overlayImageBase64!,
+                        label: scanResult ?? '',
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: _buildBottomAppBar(context),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.green.shade700,
         elevation: 4,
         shape: const CircleBorder(),
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => ScanScreen()),
           );
+
+          if (result != null && result is Map<String, dynamic>) {
+            setState(() {
+              scannedImageBase64 = result['image'];
+              overlayImageBase64 = result['overlay'];
+              scanResult = result['result'];
+            });
+          }
         },
         child: const Icon(
           FontAwesomeIcons.qrcode,
@@ -70,131 +79,23 @@ class HomePage extends StatelessWidget {
 
   Widget _buildAppBar() {
     return Padding(
-      padding: const EdgeInsets.only(top: 60, left: 16, right: 16, bottom: 20),
+      padding: const EdgeInsets.only(top: 20, left: 16, right: 16, bottom: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              const CircleAvatar(
-                backgroundImage: AssetImage('assets/fmd3.png'),
-                radius: 30,
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Halo sobat vet! 👋",
-                      style:
-                          TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-                  const Text("Ilham Rigan",
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ],
+          Text(
+            "FMD Detection",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.green.shade800,
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.notifications, color: Colors.green),
             onPressed: () {},
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildHealthDataCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.only(top: 0),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [const Color(0xFF1B641F), Colors.green.shade400],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Data Kesehatan Sapi",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildStatistic("10", "Sapi Sehat"),
-              _buildStatistic("2", "Sapi Sakit"),
-              _buildStatistic("1", "Sapi Dirawat"),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatistic(String value, String label) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionCard({
-    required String title,
-    String? subtitle,
-    required IconData icon,
-    required Gradient gradient,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Container(
-        width: double.infinity, // Card diperlebar
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: ListTile(
-          title: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          subtitle: subtitle != null
-              ? Text(
-                  subtitle,
-                  style: const TextStyle(color: Colors.white70),
-                )
-              : null,
-          trailing: Icon(icon, color: Colors.white),
-          onTap: onTap,
-        ),
       ),
     );
   }
@@ -238,10 +139,58 @@ class HomePage extends StatelessWidget {
     required VoidCallback onPressed,
   }) {
     return IconButton(
-      icon: Icon(icon, color: color, size: 35),
+      icon: Icon(icon, color: color, size: 32),
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(),
       onPressed: onPressed,
+    );
+  }
+
+  Widget _buildImageCard({
+    required String title,
+    required String imageBase64,
+    required String label,
+  }) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      margin: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            alignment: Alignment.center,
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: Image.memory(
+              base64Decode(imageBase64),
+              fit: BoxFit.cover,
+              height: 300,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.green,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
